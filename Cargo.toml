@@ -1,0 +1,26 @@
+[package]
+name = "spotify-scaler"
+version = "0.1.0"
+authors = ["Justin Gerhardt <justin@gerhardt.link>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio-core = "0.1.17"
+futures = "0.1.29"
+tokio-timer= "0.2.12"
+env_logger = "0.7.1"
+log = "0.4.8"
+tokio-io = "0.1.12"
+rspotify = "0.7.0"
+read-human = "0.1.1"
+id3 = "0.3.0"
+reqwest = "0.9.17"
+dirs = "2.0.2"
+
+[dependencies.librespot]
+git = "https://github.com/philippe44/librespot"
+rev = "7c182f5c1976ccf875afb1fcc95d229427158439"
+default-features = false
+features = []
