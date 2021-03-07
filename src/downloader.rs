@@ -4,8 +4,9 @@ extern crate log;
 extern crate tokio_core;
 extern crate tokio_timer;
 
-use futures::future::IntoFuture;
-use futures::sync::oneshot;
+use compat::Compat;
+use futures::channel::oneshot;
+use futures::compat;
 use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::authentication::Credentials;
 use librespot::core::config::SessionConfig;
@@ -93,7 +94,7 @@ impl Downloader {
             decrypted_file.read_to_end(&mut result).unwrap();
             tx.send(result).unwrap();
         });
-        Some(self.core.run(rx.into_future()).unwrap())
+        Some(self.core.run(Compat::new(rx)).unwrap())
     }
 }
 fn find_available_alternative<'a>(

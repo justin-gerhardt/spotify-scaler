@@ -1,4 +1,4 @@
-use rspotify::spotify::model::track::FullTrack;
+use rspotify::model::track::FullTrack;
 use std::env;
 use std::io::Read;
 use std::io::Write;
@@ -12,7 +12,7 @@ fn main() {
     let client_secret = env::var("WEB_CLIENT_SECRET").unwrap();
     let username = env::var("SPOTIFY_USERNAME").unwrap();
     let password = env::var("SPOTIFY_PASSWORD").unwrap();
-    
+
     let connect = connect::Connect::new(&client_id, &client_secret);
 
     let results = loop {

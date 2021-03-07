@@ -1,26 +1,34 @@
 [package]
-name = "spotify-scaler"
-version = "0.1.0"
 authors = ["Justin Gerhardt <justin@gerhardt.link>"]
 edition = "2018"
+name = "spotify-scaler"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio-core = "0.1.17"
-futures = "0.1.29"
-tokio-timer= "0.2.12"
-env_logger = "0.7.1"
-log = "0.4.8"
-tokio-io = "0.1.12"
-rspotify = "0.7.0"
-read-human = "0.1.1"
-id3 = "0.3.0"
-reqwest = "0.9.17"
 dirs = "2.0.2"
+env_logger = "0.7.1"
+# futures = "0.3.13"
+id3 = "0.3.0"
+log = "0.4.8"
+read-human = "0.1.1"
+reqwest = "0.9.17"
+rspotify = "0.10.0"
+tokio = {version = "0.2.24", features = ["full"]}
+tokio-core = "0.1.17"
+tokio-io = "0.1.12"
+tokio-timer = "0.2.12"
+# librespot = "0.1.6"
 
 [dependencies.librespot]
-git = "https://github.com/philippe44/librespot"
-rev = "7c182f5c1976ccf875afb1fcc95d229427158439"
 default-features = false
 features = []
+version = "0.1.6"
+
+[dependencies.futures]
+features = ["compat"]
+version = "0.3.13"
+
+[patch.crates-io]
+rspotify = {git = "https://github.com/justin-gerhardt/rspotify", branch = "token_patch"}
