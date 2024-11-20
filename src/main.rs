@@ -1,23 +1,26 @@
 use rspotify::model::track::FullTrack;
+use rspotify::model::Id;
 use std::env;
 use std::io::Read;
 use std::io::Write;
+mod auth;
 mod connect;
 
 mod downloader;
 use std::process::{Command, Stdio};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let client_id = env::var("WEB_CLIENT_ID").unwrap();
     let client_secret = env::var("WEB_CLIENT_SECRET").unwrap();
-    let username = env::var("SPOTIFY_USERNAME").unwrap();
-    let password = env::var("SPOTIFY_PASSWORD").unwrap();
+    let auth = auth::Auth::new(&client_id, &client_secret).await;
+    let token = auth.get_access_token().await;
 
-    let connect = connect::Connect::new(&client_id, &client_secret);
+    let connect = connect::Connect::new(&client_id, &client_secret).await;
 
     let results = loop {
         let query = read_human::read_string_nonempty("Search Query").unwrap();
-        let results = connect.search(&query);
+        let results = connect.search(&query).await;
         if results.len() > 0 {
             break results;
         } else {
@@ -57,11 +60,14 @@ fn main() {
         }
     };
 
-    let mut downloader = downloader::Downloader::new(username, password);
+    let mut downloader = downloader::Downloader::new(token).await;
     println!("Downloading song");
-    let ogg = downloader.get_ogg(&track.uri).unwrap();
+    let ogg = downloader
+        .get_ogg(&track.id.as_ref().unwrap().uri())
+        .await
+        .unwrap();
     println!("Done downloading");
-    let metadata = get_metadata(track);
+    let metadata = get_metadata(track).await;
     let mp3 = convert_to_mp3(ogg, speed);
     let fiile_path = dirs::home_dir()
         .unwrap()
@@ -109,7 +115,7 @@ fn get_mp3_filename(name: &str) -> String {
     result + ext
 }
 
-fn get_metadata(track: &FullTrack) -> Vec<u8> {
+async fn get_metadata(track: &FullTrack) -> Vec<u8> {
     let mut tag = id3::Tag::new();
     tag.set_title(&track.name);
     tag.set_artist(
@@ -123,19 +129,18 @@ fn get_metadata(track: &FullTrack) -> Vec<u8> {
     let images = &track.album.images;
     if images.len() > 0 {
         println!("downloading cover art");
-        let client = reqwest::Client::new();
-        let res = client.get(&images[0].url).send();
+        let res = reqwest::get(&images[0].url).await;
         match res {
-            Ok(mut response) => {
+            Ok(response) => {
                 if response.status() == 200 {
-                    let mut image_data: Vec<u8> = vec![];
-                    response.copy_to(&mut image_data).unwrap();
+                    let mime = response
+                        .headers()
+                        .get("Content-Type")
+                        .map_or("image/jpeg", |x| x.to_str().unwrap())
+                        .to_owned();
+                    let image_data = response.bytes().await.unwrap().to_vec();
                     tag.add_picture(id3::frame::Picture {
-                        mime_type: response
-                            .headers()
-                            .get("Content-Type")
-                            .map_or("image/jpeg", |x| x.to_str().unwrap())
-                            .to_owned(),
+                        mime_type: mime,
                         description: "Cover".to_string(),
                         picture_type: id3::frame::PictureType::CoverFront,
                         data: image_data,
@@ -144,7 +149,7 @@ fn get_metadata(track: &FullTrack) -> Vec<u8> {
                     println!(
                         "Got response code {} when retreiving cover art. Response text {}",
                         response.status(),
-                        response.text().expect("Can't get response body?")
+                        response.text().await.expect("Can't get response body?")
                     );
                 }
             }
