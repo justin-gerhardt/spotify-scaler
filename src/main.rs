@@ -1,5 +1,6 @@
 use rspotify::model::track::FullTrack;
 use rspotify::model::Id;
+use rspotify::model::SimplifiedArtist;
 use std::env;
 use std::io::Read;
 use std::io::Write;
@@ -72,7 +73,7 @@ async fn main() {
     let fiile_path = dirs::home_dir()
         .unwrap()
         .join("music")
-        .join(get_mp3_filename(&track.name));
+        .join(get_mp3_filename(&track));
     let mut file = std::fs::File::create(fiile_path).unwrap();
     file.write_all(&metadata).unwrap();
     file.write_all(&mp3).unwrap();
@@ -106,26 +107,29 @@ fn convert_to_mp3(input: Vec<u8>, speed: f32) -> Vec<u8> {
     buf
 }
 
-fn get_mp3_filename(name: &str) -> String {
+fn get_mp3_filename(track: &FullTrack) -> String {
     let ext = ".mp3";
     let ext_length = ext.as_bytes().len();
-    let mut result = name.replace("/", "");
+    let title = track.name.replace("/", "");
+    let artist = stringify_artists(&track.artists).replace("/", "");
+    let mut result = title + " - " + &artist;
     while result.as_bytes().len() > (255 - ext_length) {
         result.pop();
     }
     result + ext
 }
 
+fn stringify_artists(artists: &Vec<SimplifiedArtist>)-> String {
+    artists.into_iter()
+    .map(|artist| artist.name.as_ref())
+    .collect::<Vec<&str>>()
+    .join(", ")
+}
+
 async fn get_metadata(track: &FullTrack) -> Vec<u8> {
     let mut tag = id3::Tag::new();
     tag.set_title(&track.name);
-    tag.set_artist(
-        (&track.artists)
-            .into_iter()
-            .map(|artist| artist.name.as_ref())
-            .collect::<Vec<&str>>()
-            .join(", "),
-    );
+    tag.set_artist(stringify_artists(&track.artists));
     tag.set_album(&track.album.name);
     let images = &track.album.images;
     if images.len() > 0 {
