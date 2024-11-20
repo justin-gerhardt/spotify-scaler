@@ -82,6 +82,7 @@ async fn main() {
 fn convert_to_mp3(input: Vec<u8>, speed: f32) -> Vec<u8> {
     let mut ffmpeg_command = Command::new("ffmpeg")
         .args(&[
+            "-hide_banner",
             "-i",
             "-",
             "-filter:a",
